@@ -17,12 +17,19 @@ main = do
 
 tests :: Test.Test
 tests = Test.TestList
-  [ Test.TestLabel "handles invalid UTF-8 without throwing" $
-    expectLeft "\x80"
-  , Test.TestLabel "fails to parse an invalid module" $
-    expectLeft "module invalid where"
-  , Test.TestLabel "parses a valid module" $
-    expectRight "module Valid where"
+  [ Test.TestLabel "handles invalid UTF-8 without throwing" $ expectLeft
+    "\x80"
+  , Test.TestLabel "fails to parse an invalid module" $ expectLeft
+    "module invalid where"
+  , Test.TestLabel "parses a valid module" $ expectRight
+    "module Valid where"
+  , Test.TestLabel "fails to parse without required extension" $ expectLeft
+    "module WithoutBlockArguments where\n\
+    \zero = id do 0"
+  , Test.TestLabel "parses with required extension" $ expectRight
+    "{-# language BlockArguments #-}\n\
+    \module WithBlockArguments where\n\
+    \zero = id do 0"
   ]
 
 expectLeft :: ByteString.ByteString -> Test.Test
