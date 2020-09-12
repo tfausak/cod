@@ -15,11 +15,13 @@ import qualified GHC.LanguageExtensions.Type
 import qualified GHC.Paths
 import qualified HeaderInfo
 import qualified Language.Preprocessor.Cpphs
+import qualified Language.Preprocessor.Unlit
 import qualified Lexer
 import qualified Outputable
 import qualified Parser
 import qualified SrcLoc
 import qualified StringBuffer
+import qualified System.FilePath
 
 type Errors = Bag.Bag ErrUtils.ErrMsg
 
@@ -36,7 +38,12 @@ parse extensions filePath byteString = Control.Exception.handle toErrors $ do
   let onDecodeError = Data.Text.Encoding.Error.lenientDecode
   let text = Data.Text.Encoding.decodeUtf8With onDecodeError byteString
   let string1 = Data.Text.unpack text
-  let stringBuffer1 = StringBuffer.stringToStringBuffer string1
+
+  let
+    string2 = if System.FilePath.isExtensionOf "lhs" filePath
+      then Language.Preprocessor.Unlit.unlit filePath string1
+      else string1
+  let stringBuffer1 = StringBuffer.stringToStringBuffer string2
 
   let fastString = FastString.mkFastString filePath
   let realSrcLoc = SrcLoc.mkRealSrcLoc fastString 1 1
@@ -53,8 +60,8 @@ parse extensions filePath byteString = Control.Exception.handle toErrors $ do
           { Language.Preprocessor.Cpphs.warnings = False
           }
       }
-  string2 <- Language.Preprocessor.Cpphs.runCpphs cpphsOptions filePath string1
-  let stringBuffer2 = StringBuffer.stringToStringBuffer string2
+  string3 <- Language.Preprocessor.Cpphs.runCpphs cpphsOptions filePath string2
+  let stringBuffer2 = StringBuffer.stringToStringBuffer string3
 
   let pState1 = Lexer.mkPState dynFlags3 stringBuffer2 realSrcLoc
 

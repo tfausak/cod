@@ -20,47 +20,64 @@ tests :: Test.Test
 tests = Test.TestList
   [ Test.TestLabel "handles invalid UTF-8 without throwing" $ expectLeft
     []
+    ""
     "\x80"
   , Test.TestLabel "fails to parse an invalid module" $ expectLeft
     []
+    ""
     "module invalid where"
   , Test.TestLabel "parses a valid module" $ expectRight
     []
+    ""
     "module Valid where"
   , Test.TestLabel "fails to parse without required extension" $ expectLeft
     []
+    ""
     "module WithoutBlockArguments where\n\
     \zero = id do 0"
   , Test.TestLabel "parses with required extension" $ expectRight
     []
+    ""
     "{-# language BlockArguments #-}\n\
     \module WithBlockArguments where\n\
     \zero = id do 0"
   , Test.TestLabel "parses with required extension passed in" $ expectRight
     [(True, X.BlockArguments)]
+    ""
     "module WithBlockArguments where\n\
     \zero = id do 0"
   , Test.TestLabel "handles implied extensions" $ expectRight
     [(True, X.RankNTypes)]
+    ""
     "module WithExplicitForAll where \n\
     \identity :: forall a . a -> a\n\
     \identity x = x"
   , Test.TestLabel "handles CPP" $ expectRight
     [(True, X.Cpp)]
+    ""
     "module WithCpp where\n\
     \#"
   , Test.TestLabel "handles CPP errors without throwing" $ expectLeft
     [(True, X.Cpp)]
+    ""
     "module WithCpp where\n\
     \#error"
+  , Test.TestLabel "does not unlit without extension" $ expectLeft
+    []
+    ""
+    "> module WithoutLiterateHaskell where"
+  , Test.TestLabel "unlits with extension" $ expectRight
+    []
+    ".lhs"
+    "> module WithLiterateHaskell where"
   ]
 
-expectLeft :: [(Bool, X.Extension)] -> ByteString.ByteString -> Test.Test
-expectLeft extensions contents = Test.TestCase $ do
-  result <- Cod.parse extensions "" contents
+expectLeft :: [(Bool, X.Extension)] -> FilePath -> ByteString.ByteString -> Test.Test
+expectLeft extensions filePath contents = Test.TestCase $ do
+  result <- Cod.parse extensions filePath contents
   Test.assertBool "expected Left but got Right" $ Either.isLeft result
 
-expectRight :: [(Bool, X.Extension)] -> ByteString.ByteString -> Test.Test
-expectRight extensions contents = Test.TestCase $ do
-  result <- Cod.parse extensions "" contents
+expectRight :: [(Bool, X.Extension)] -> FilePath -> ByteString.ByteString -> Test.Test
+expectRight extensions filePath contents = Test.TestCase $ do
+  result <- Cod.parse extensions filePath contents
   Test.assertBool "expected Right but got Left" $ Either.isRight result
