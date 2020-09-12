@@ -1,0 +1,31 @@
+build-type: Simple
+cabal-version: >= 1.6
+category: Documentation
+description: Cod quickly generates Haskell documentation.
+extra-source-files: README.markdown
+license-file: LICENSE.markdown
+license: ISC
+maintainer: Taylor Fausak
+name: cod
+synopsis: Quickly generate Haskell documentation.
+version: 0.0.0.0
+
+source-repository head
+  location: https://github.com/tfausak/cod
+  type: git
+
+library
+  autogen-modules: Paths_cod
+  build-depends:
+    base >= 4.14.0 && < 4.15
+  exposed-modules: Cod
+  ghc-options:
+    -Weverything
+    -Wno-implicit-prelude
+    -Wno-missing-deriving-strategies
+    -Wno-missing-exported-signatures
+    -Wno-missing-safe-haskell-mode
+    -Wno-prepositive-qualified-module
+    -Wno-safe
+  hs-source-dirs: src/lib
+  other-modules: Paths_cod
