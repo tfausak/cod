@@ -41,6 +41,12 @@ tests = Test.TestList
     "{-# language BlockArguments #-}\n\
     \module WithBlockArguments where\n\
     \zero = id do 0"
+  , Test.TestLabel "parses with required extension as GHC option" $ expectRight
+    []
+    ""
+    "{-# options_ghc -XBlockArguments #-}\n\
+    \module WithBlockArguments where\n\
+    \zero = id do 0"
   , Test.TestLabel "parses with required extension passed in" $ expectRight
     [(True, X.BlockArguments)]
     ""
