@@ -13,6 +13,7 @@ import qualified GHC.Hs
 import qualified GHC.LanguageExtensions.Type
 import qualified GHC.Paths
 import qualified HeaderInfo
+import qualified Language.Preprocessor.Cpphs
 import qualified Lexer
 import qualified Parser
 import qualified SrcLoc
@@ -28,23 +29,32 @@ parse
   -> Data.ByteString.ByteString
   -> IO (Either Errors Module)
 parse extensions filePath byteString = do
-  let libdir = Just GHC.Paths.libdir
-  dynFlags1 <- GHC.runGhc libdir GHC.getSessionDynFlags
+  dynFlags1 <- getDynFlags
 
   let onDecodeError = Data.Text.Encoding.Error.lenientDecode
   let text = Data.Text.Encoding.decodeUtf8With onDecodeError byteString
-  let string = Data.Text.unpack text
-  let stringBuffer = StringBuffer.stringToStringBuffer string
+  let string1 = Data.Text.unpack text
+  let stringBuffer1 = StringBuffer.stringToStringBuffer string1
 
   let fastString = FastString.mkFastString filePath
   let realSrcLoc = SrcLoc.mkRealSrcLoc fastString 1 1
 
   let dynFlags2 = foldr toggleExtension dynFlags1 extensions
 
-  let locatedStrings = HeaderInfo.getOptions dynFlags2 stringBuffer filePath
+  let locatedStrings = HeaderInfo.getOptions dynFlags2 stringBuffer1 filePath
   (dynFlags3, _, _) <- DynFlags.parseDynamicFilePragma dynFlags2 locatedStrings
 
-  let pState1 = Lexer.mkPState dynFlags3 stringBuffer realSrcLoc
+  let
+    cpphsOptions = Language.Preprocessor.Cpphs.defaultCpphsOptions
+      { Language.Preprocessor.Cpphs.boolopts =
+        Language.Preprocessor.Cpphs.defaultBoolOptions
+          { Language.Preprocessor.Cpphs.warnings = False
+          }
+      }
+  string2 <- Language.Preprocessor.Cpphs.runCpphs cpphsOptions filePath string1
+  let stringBuffer2 = StringBuffer.stringToStringBuffer string2
+
+  let pState1 = Lexer.mkPState dynFlags3 stringBuffer2 realSrcLoc
 
   pure $ case Lexer.unP Parser.parseModule pState1 of
     Lexer.PFailed pState2 -> Left . snd $ Lexer.getMessages pState2 dynFlags3
@@ -53,6 +63,11 @@ parse extensions filePath byteString = do
       in if null bagErrMsg
         then Right locatedHsModuleGhcPs
         else Left bagErrMsg
+
+getDynFlags :: IO DynFlags.DynFlags
+getDynFlags = do
+  let libdir = Just GHC.Paths.libdir
+  GHC.runGhc libdir GHC.getSessionDynFlags
 
 toggleExtension
   :: (Bool, GHC.LanguageExtensions.Type.Extension)

@@ -45,6 +45,10 @@ tests = Test.TestList
     "module WithExplicitForAll where \n\
     \identity :: forall a . a -> a\n\
     \identity x = x"
+  , Test.TestLabel "handles CPP" $ expectRight
+    [(True, X.Cpp)]
+    "module WithCpp where\n\
+    \#"
   ]
 
 expectLeft :: [(Bool, X.Extension)] -> ByteString.ByteString -> Test.Test
