@@ -49,6 +49,10 @@ tests = Test.TestList
     [(True, X.Cpp)]
     "module WithCpp where\n\
     \#"
+  , Test.TestLabel "handles CPP errors without throwing" $ expectLeft
+    [(True, X.Cpp)]
+    "module WithCpp where\n\
+    \#error"
   ]
 
 expectLeft :: [(Bool, X.Extension)] -> ByteString.ByteString -> Test.Test

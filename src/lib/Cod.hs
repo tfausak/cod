@@ -1,6 +1,7 @@
 module Cod ( parse ) where
 
 import qualified Bag
+import qualified Control.Exception
 import qualified Data.ByteString
 import qualified Data.Text
 import qualified Data.Text.Encoding
@@ -15,6 +16,7 @@ import qualified GHC.Paths
 import qualified HeaderInfo
 import qualified Language.Preprocessor.Cpphs
 import qualified Lexer
+import qualified Outputable
 import qualified Parser
 import qualified SrcLoc
 import qualified StringBuffer
@@ -28,7 +30,7 @@ parse
   -> FilePath
   -> Data.ByteString.ByteString
   -> IO (Either Errors Module)
-parse extensions filePath byteString = do
+parse extensions filePath byteString = Control.Exception.handle toErrors $ do
   dynFlags1 <- getDynFlags
 
   let onDecodeError = Data.Text.Encoding.Error.lenientDecode
@@ -63,6 +65,16 @@ parse extensions filePath byteString = do
       in if null bagErrMsg
         then Right locatedHsModuleGhcPs
         else Left bagErrMsg
+
+toErrors :: Control.Exception.SomeException -> IO (Either Errors a)
+toErrors someException = do
+  dynFlags <- getDynFlags
+  pure
+    . Left
+    . Bag.unitBag
+    . ErrUtils.mkPlainErrMsg dynFlags SrcLoc.noSrcSpan
+    . Outputable.text
+    $ Control.Exception.displayException someException
 
 getDynFlags :: IO DynFlags.DynFlags
 getDynFlags = do
