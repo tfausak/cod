@@ -1,1 +1,5 @@
 resolver: ghc-8.10.1
+extra-deps:
+  - call-stack-0.2.0
+  - ghc-paths-0.1.0.12
+  - HUnit-1.6.0.0
