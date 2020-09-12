@@ -70,6 +70,11 @@ tests = Test.TestList
     []
     ".lhs"
     "> module WithLiterateHaskell where"
+  , Test.TestLabel "handles shebang lines" $ expectRight
+    []
+    ""
+    "#! /bin/true\n\
+    \module WithShebang where"
   ]
 
 expectLeft :: [(Bool, X.Extension)] -> FilePath -> ByteString.ByteString -> Test.Test
