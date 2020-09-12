@@ -37,17 +37,22 @@ tests = Test.TestList
     \module WithBlockArguments where\n\
     \zero = id do 0"
   , Test.TestLabel "parses with required extension passed in" $ expectRight
-    [X.BlockArguments]
+    [(True, X.BlockArguments)]
     "module WithBlockArguments where\n\
     \zero = id do 0"
+  , Test.TestLabel "handles implied extensions" $ expectRight
+    [(True, X.RankNTypes)]
+    "module WithExplicitForAll where \n\
+    \identity :: forall a . a -> a\n\
+    \identity x = x"
   ]
 
-expectLeft :: [X.Extension] -> ByteString.ByteString -> Test.Test
+expectLeft :: [(Bool, X.Extension)] -> ByteString.ByteString -> Test.Test
 expectLeft extensions contents = Test.TestCase $ do
   result <- Cod.parse extensions "" contents
   Test.assertBool "expected Left but got Right" $ Either.isLeft result
 
-expectRight :: [X.Extension] -> ByteString.ByteString -> Test.Test
+expectRight :: [(Bool, X.Extension)] -> ByteString.ByteString -> Test.Test
 expectRight extensions contents = Test.TestCase $ do
   result <- Cod.parse extensions "" contents
   Test.assertBool "expected Right but got Left" $ Either.isRight result
