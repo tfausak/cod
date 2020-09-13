@@ -29,10 +29,11 @@ type Errors = Bag.Bag ErrUtils.ErrMsg
 type Module = SrcLoc.Located (GHC.Hs.HsModule GHC.Hs.GhcPs)
 
 extract :: Module -> [String]
-extract module_ =
-  fmap (fromDecl . SrcLoc.unLoc) . GHC.Hs.hsmodDecls $ SrcLoc.unLoc module_
+extract module_ = concatMap (fromDecl . SrcLoc.unLoc)
+  . GHC.Hs.hsmodDecls
+  $ SrcLoc.unLoc module_
 
-fromDecl :: GHC.Hs.HsDecl GHC.Hs.GhcPs -> String
+fromDecl :: GHC.Hs.HsDecl GHC.Hs.GhcPs -> [String]
 fromDecl decl =
   let
     crash = error
@@ -41,11 +42,17 @@ fromDecl decl =
       $ Outputable.ppr decl
   in case decl of
     GHC.Hs.ValD _ bind -> case bind of
-      GHC.Hs.FunBind _ lidp _ _ _ -> case SrcLoc.unLoc lidp of
-        GHC.Unqual occName -> OccName.occNameString occName
-        _ -> crash
+      GHC.Hs.FunBind _ lidp _ _ _ -> [fromLIdP lidp]
+      _ -> crash
+    GHC.Hs.SigD _ sig -> case sig of
+      GHC.Hs.TypeSig _ lidps _ -> fmap fromLIdP lidps
       _ -> crash
     _ -> crash
+
+fromLIdP :: GHC.Hs.LIdP GHC.Hs.GhcPs -> String
+fromLIdP lidp = case SrcLoc.unLoc lidp of
+  GHC.Unqual occName -> OccName.occNameString occName
+  _ -> "todo"
 
 parse
   :: [(Bool, GHC.LanguageExtensions.Type.Extension)]

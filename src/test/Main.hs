@@ -81,9 +81,12 @@ tests = Test.TestList
     ""
     "#! /bin/true\n\
     \module WithShebang where"
-  , it "extracts a regular declaration" $ do
+  , it "extracts a value declaration" $ do
     Right module_ <- Cod.parse [] "" "unit = ()"
-    Test.assertEqual "" ["unit"] (Cod.extract module_)
+    Test.assertEqual "" ["unit"] $ Cod.extract module_
+  , it "extracts a type declaration" $ do
+    Right module_ <- Cod.parse [] "" "unit :: ()"
+    Test.assertEqual "" ["unit"] $ Cod.extract module_
   ]
 
 it :: String -> Test.Assertion -> Test.Test
