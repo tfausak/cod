@@ -1,4 +1,4 @@
-module Cod ( parse ) where
+module Cod ( parse, extract ) where
 
 import qualified Bag
 import qualified Control.Exception
@@ -17,6 +17,7 @@ import qualified HeaderInfo
 import qualified Language.Preprocessor.Cpphs
 import qualified Language.Preprocessor.Unlit
 import qualified Lexer
+import qualified OccName
 import qualified Outputable
 import qualified Parser
 import qualified SrcLoc
@@ -26,6 +27,25 @@ import qualified System.FilePath
 type Errors = Bag.Bag ErrUtils.ErrMsg
 
 type Module = SrcLoc.Located (GHC.Hs.HsModule GHC.Hs.GhcPs)
+
+extract :: Module -> [String]
+extract module_ =
+  fmap (fromDecl . SrcLoc.unLoc) . GHC.Hs.hsmodDecls $ SrcLoc.unLoc module_
+
+fromDecl :: GHC.Hs.HsDecl GHC.Hs.GhcPs -> String
+fromDecl decl =
+  let
+    crash = error
+      . mappend "fromDecl: "
+      . Outputable.showSDocUnsafe
+      $ Outputable.ppr decl
+  in case decl of
+    GHC.Hs.ValD _ bind -> case bind of
+      GHC.Hs.FunBind _ lidp _ _ _ -> case SrcLoc.unLoc lidp of
+        GHC.Unqual occName -> OccName.occNameString occName
+        _ -> crash
+      _ -> crash
+    _ -> crash
 
 parse
   :: [(Bool, GHC.LanguageExtensions.Type.Extension)]

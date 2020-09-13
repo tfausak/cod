@@ -81,7 +81,13 @@ tests = Test.TestList
     ""
     "#! /bin/true\n\
     \module WithShebang where"
+  , it "extracts a regular declaration" $ do
+    Right module_ <- Cod.parse [] "" "unit = ()"
+    Test.assertEqual "" ["unit"] (Cod.extract module_)
   ]
+
+it :: String -> Test.Assertion -> Test.Test
+it label = Test.TestLabel label . Test.TestCase
 
 expectLeft :: [(Bool, X.Extension)] -> FilePath -> ByteString.ByteString -> Test.Test
 expectLeft extensions filePath contents = Test.TestCase $ do
